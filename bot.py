@@ -6,17 +6,19 @@ from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
 from aiogram.enums import ChatAction
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from google import genai
+import google.generativeai as genai
 from aiohttp import web
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAF3Kyd79btdM18HR8JMaK0SFRbqXBtITVU")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Gemini sozlashi
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Yangilangan menyu tugmalari
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🥘 Masalliqlardan taom topish"), KeyboardButton(text="⚡ Tez tayyor bo‘ladigan taomlar")],
@@ -103,9 +105,10 @@ async def handle_user_text(message: types.Message):
 async def generate_recipe(message: types.Message, prompt_text: str):
     await bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.UPLOAD_PHOTO)
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=f"{SYSTEM_PROMPT}\n\n{prompt_text}"
+        # Gemini generatsiyasi
+        response = await asyncio.to_thread(
+            model.generate_content,
+            f"{SYSTEM_PROMPT}\n\n{prompt_text}"
         )
         full_text = response.text.strip()
         
