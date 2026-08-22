@@ -12,15 +12,16 @@ from aiohttp import web
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAF3Kyd79btdM18HR8JMaK0SFRbqXBtITVU")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
 
-# Client va Bot obyektlari
 client = genai.Client(api_key=GEMINI_API_KEY)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+# Yangilangan menyu tugmalari
 main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🥘 Masalliqlardan taom topish"), KeyboardButton(text="⚡ Tez tayyor bo‘ladigan taomlar")],
         [KeyboardButton(text="💰 Arzon taomlar"), KeyboardButton(text="🍽 Nonushta / Tushlik / Kechki ovqat")],
+        [KeyboardButton(text="🏆 Top Retseptlar"), KeyboardButton(text="📞 Bog'lanish")],
         [KeyboardButton(text="📖 To‘liq retsept"), KeyboardButton(text="🔄 Boshqa taom tavsiya qilish")]
     ],
     resize_keyboard=True
@@ -29,7 +30,7 @@ main_keyboard = ReplyKeyboardMarkup(
 SYSTEM_PROMPT = (
     "Siz 'Oshpaz Bola' nomli professional o'zbek milliy va jahon oshxonasi mutaxassisisiz. "
     "Javobingizning eng birinchi qatoriga faqat taomning qisqa inglizcha nomini yozing (masalan: Uzbek pilaf, Beef soup). "
-    "Ikkinchi qatordan boshlab o'zbek tilida tayyorlash retseptini qisqa va lochin formatda berishingiz shart:\n\n"
+    "Ikkinchi qatordan boshlab o'zbek tilida tayyorlash retseptini qisqa va londa formatda berishingiz shart:\n\n"
     "🍲 Taom nomi: ...\n"
     "⏱ Pishirish vaqti: ...\n"
     "👥 Necha kishilik: ...\n"
@@ -46,6 +47,30 @@ async def cmd_start(message: types.Message):
         reply_markup=main_keyboard,
         parse_mode="Markdown"
     )
+
+@dp.message(F.text == "🏆 Top Retseptlar")
+@dp.message(Command("top"))
+async def show_top_recipes(message: types.Message):
+    top_text = (
+        "🏆 **Oshpaz Bola Botining Eng Ommabop Retseptlar Reytingi:**\n\n"
+        "🥇 **1-o'rin:** *To'y Osh (O'zbekcha Shaxshona Osh)* — eng ko'p so'ralgan va sevimli taom.\n"
+        "🥈 **2-o'rin:** *Qozon Kabob* — haqiqiy go'shtxo'rlar tanlovi.\n"
+        "🥉 **3-o'rin:** *Klassik Somsa* — har qanday davrada 1-raqamli pishiriq.\n\n"
+        "💡 *Ushbu taomlardan birining retseptini olish uchun shunchaki nomini yozib yuboring!*"
+    )
+    await message.answer(top_text, parse_mode="Markdown", reply_markup=main_keyboard)
+
+@dp.message(F.text == "📞 Bog'lanish")
+@dp.message(Command("contact"))
+async def show_contact(message: types.Message):
+    contact_text = (
+        "📞 **Ma'lumot olish va Bog'lanish**\n\n"
+        "Bot bo'yicha takliflar, hamkorlik yoki xatoliklar haqida xabar berish uchun adminga murojaat qilishingiz mumkin:\n\n"
+        "👨‍💻 **Admin:** @sobitovv_o8\n"
+        "🤖 **Bot versiyasi:** Oshpaz Bola PRO v2.5 AI\n"
+        "✨ Qulay va mazali retseptlar ulashishda davom etamiz!"
+    )
+    await message.answer(contact_text, parse_mode="Markdown", reply_markup=main_keyboard)
 
 @dp.message(F.text == "🥘 Masalliqlardan taom topish")
 async def ask_ingredients(message: types.Message):
@@ -88,7 +113,6 @@ async def generate_recipe(message: types.Message, prompt_text: str):
         english_food_name = lines[0].strip()
         recipe_body = "\n".join(lines[1:]).strip()
         
-        # Caption uzilib qolmasligi uchun 1000 belgiga qisqartiramiz
         if len(recipe_body) > 1000:
             recipe_body = recipe_body[:995] + "..."
 
