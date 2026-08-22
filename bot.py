@@ -105,10 +105,10 @@ async def handle_user_text(message: types.Message):
 async def generate_recipe(message: types.Message, prompt_text: str):
     await bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.UPLOAD_PHOTO)
     try:
-        # Gemini generatsiyasi
-        response = await asyncio.to_thread(
-            model.generate_content,
-            f"{SYSTEM_PROMPT}\n\n{prompt_text}"
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None, 
+            lambda: model.generate_content(f"{SYSTEM_PROMPT}\n\n{prompt_text}")
         )
         full_text = response.text.strip()
         
