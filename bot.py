@@ -13,7 +13,8 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Gemini API sozlamasi
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Model nomi barqaror versiyaga o'tkazildi
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -67,7 +68,12 @@ async def handle_user_text(message: types.Message):
         await message.answer(recipe_text, reply_markup=main_keyboard)
     except Exception as e:
         logging.error(f"Gemini Xatosi: {e}")
-        await message.answer(f"⚠️ Xatolik yuz berdi: {str(e)[:100]}\n\n🤖 @oshpaz_bolabot", reply_markup=main_keyboard)
+        await message.answer(
+            f"⚠️ Xatolik yuz berdi: {str(e)[:100]}\n\n"
+            "📩 Iltimos, ushbu xatolikni adminga yuboring: @sobitovv_o8\n\n"
+            "🤖 @oshpaz_bolabot", 
+            reply_markup=main_keyboard
+        )
 
 async def handle(request):
     return web.Response(text="Bot Live!")
