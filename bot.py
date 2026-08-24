@@ -12,8 +12,8 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
-# Eng barqaror universal model nomi:
-model = genai.GenerativeModel('gemini-pro')
+# Eng yangi va barqaror model versiyasi
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -34,7 +34,7 @@ SYSTEM_PROMPT = (
     "Pishirish vaqti: ...\n"
     "Necha kishilik: ...\n"
     "Tayyorlash bosqichlari: (3-4 ta qisqa qadam)\n\n"
-    "Javobingiz maksimal 400 belgidan oshmasin va markdown belgilardan foydalanmang."
+    "Javobingiz maksimal 400 belgidan oshmasin va formatlash belgilaridan foydalanmang."
 )
 
 @dp.message(Command("start"))
@@ -68,7 +68,7 @@ async def handle_user_text(message: types.Message):
     except Exception as e:
         logging.error(f"Gemini Xatosi: {e}")
         await message.answer(
-            f"⚠️ Xatolik yuz berdi: {str(e)[:100]}\n\n"
+            f"⚠️ Kechirasiz, retseptni generatsiya qilishda xatolik yuz berdi.\n\n"
             "📩 Adminga yuboring: @sobitovv_o8\n\n"
             "🤖 @oshpaz_bolabot", 
             reply_markup=main_keyboard
