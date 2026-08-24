@@ -5,18 +5,15 @@ import urllib.parse
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
 from aiogram.enums import ChatAction
-from aiogram.types import (
-    ReplyKeyboardMarkup, KeyboardButton,
-    InlineQueryResultArticle, InputTextMessageContent
-)
-from google import genai
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+import google.generativeai as genai
 from aiohttp import web
 
-# Token va API kalitlarni olish
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAHspRHUgyCJtE5xwKfur6vrTUJHv-Sr6QI")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -33,26 +30,21 @@ main_keyboard = ReplyKeyboardMarkup(
 
 SYSTEM_PROMPT = (
     "Siz 'Oshpaz Bola' nomli professional o'zbek milliy va jahon oshxonasi mutaxassisisiz. "
-    "Javobingizning eng birinchi qatoriga faqat taomning qisqa inglizcha nomini yozing (masalan: Uzbek pilaf, Beef soup). "
-    "Ikkinchi qatordan boshlab o'zbek tilida tayyorlash retseptini juda qisqa va londa formatda berishingiz shart:\n\n"
+    "Javobingizning eng birinchi qatoriga faqat taomning qisqa inglizcha nomini yozing (masalan: Uzbek pilaf). "
+    "Ikkinchi qatordan boshlab o'zbek tilida tayyorlash retseptini juda qisqa formatda berishingiz shart:\n\n"
     "🍲 Taom nomi: ...\n"
     "⏱ Pishirish vaqti: ...\n"
     "👥 Necha kishilik: ...\n"
     "💰 Hamyonbopligi: ...\n"
     "📖 Tayyorlash bosqichlari: (3-4 ta qisqa qadam)\n\n"
-    "Javobingiz maksimal 500 belgidan oshmasin."
+    "Javobingiz maksimal 400 belgidan oshmasin."
 )
-
-WORLD_RECIPES = [
-    {"id": "1", "title": "🍲 O'zbekcha Palov", "desc": "O'zbekiston | Guruch, go'sht, sabzi, piyoz", "text": "🍲 **O'zbekcha Palov**\n\n📌 **Masalliqlar:** Guruch, mol/qo'y go'shti, sabzi, piyoz, yog', zira.\n📖 **Tayyorlanishi:** Qozonda go'sht va piyoz qovuriladi, sabzi solib zirvak qaynatiladi. Guruch solib 25 daqiqa damlanadi.\n\n🤖 **Bot:** @oshpaz_bolabot"},
-    {"id": "2", "title": "🥩 Qozon Kabob", "desc": "O'zbekiston | Go'sht, kartoshka, zira", "text": "🥩 **Qozon Kabob**\n\n📌 **Masalliqlar:** Go'sht, kartoshka, yog', tuz, zira.\n📖 **Tayyorlanishi:** Yog'da kartoshka va go'sht qizartirib olinadi va past olovda 45 min dimlanadi.\n\n🤖 **Bot:** @oshpaz_bolabot"}
-]
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer(
         "👋 **Assalomu alaykum! Men Oshpaz Bola PROman.** 👨‍🍳\n\n"
-        "Quyidagi menyudan kerakli bo'limni tanlang yoki masalliqlarni yozing!\n\n"
+        "Quyidagi menyudan kerakli bo'limni tanlang yoki shunchaki uyingizdagi masalliqlarni yozib yuboring!\n\n"
         "🤖 **Bot:** @oshpaz_bolabot",
         reply_markup=main_keyboard,
         parse_mode="Markdown"
@@ -66,60 +58,17 @@ async def show_top_recipes(message: types.Message):
 async def show_contact(message: types.Message):
     await message.answer("👨‍💻 Admin: @sobitovv_o8\n🤖 Bot: @oshpaz_bolabot", reply_markup=main_keyboard)
 
-@dp.message(F.text == "🥘 Masalliqlardan taom topish")
-async def ask_ingredients(message: types.Message):
-    await message.answer("Uyda bor masalliqlaringizni yozib yuboring (masalan: *kartoshka, go'sht, piyoz*):", parse_mode="Markdown")
-
-@dp.message(F.text == "⚡ Tez tayyor bo‘ladigan taomlar")
-async def quick_food(message: types.Message):
-    await generate_recipe(message, "15-20 daqiqada tayyor bo'ladigan tezkor taom retseptini ber.")
-
-@dp.message(F.text == "💰 Arzon taomlar")
-async def cheap_food(message: types.Message):
-    await generate_recipe(message, "Hamyonbop arzon masalliqlardan taom retseptini ber.")
-
-@dp.message(F.text == "🍽 Nonushta / Tushlik / Kechki ovqat")
-async def meal_times(message: types.Message):
-    await generate_recipe(message, "To'yimli taom retseptini ber.")
-
-@dp.message(F.text == "📖 To‘liq retsept")
-async def full_recipe(message: types.Message):
-    await message.answer("Qaysi taomning to'liq retsepti kerak? Taom nomini yozib yuboring (masalan: *Osh*):", parse_mode="Markdown")
-
-@dp.message(F.text == "🔄 Boshqa taom tavsiya qilish")
-async def random_food(message: types.Message):
-    await generate_recipe(message, "Kutilmagan, mazali birorta taom tavsiya qil.")
-
-@dp.inline_query()
-async def inline_query_handler(query: types.InlineQuery):
-    user_query = query.query.strip().lower()
-    results = []
-    for item in WORLD_RECIPES:
-        if not user_query or user_query in item["title"].lower():
-            results.append(
-                InlineQueryResultArticle(
-                    id=item["id"],
-                    title=item["title"],
-                    description=item["desc"],
-                    input_message_content=InputTextMessageContent(message_text=item["text"], parse_mode="Markdown")
-                )
-            )
-    await query.answer(results[:50], cache_time=1)
-
 @dp.message(F.text)
 async def handle_user_text(message: types.Message):
-    await generate_recipe(message, f"So'rov: {message.text}")
+    await generate_recipe(message, message.text)
 
-async def generate_recipe(message: types.Message, prompt_text: str):
+async def generate_recipe(message: types.Message, user_input: str):
     await bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
     try:
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
             None, 
-            lambda: client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=f"{SYSTEM_PROMPT}\n\n{prompt_text}"
-            )
+            lambda: model.generate_content(f"{SYSTEM_PROMPT}\n\nFoydalanuvchi so'rovi: {user_input}")
         )
         full_text = response.text.strip()
         lines = full_text.split("\n")
@@ -150,7 +99,6 @@ async def main():
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
     
-    # Eskidan qolib ketgan barcha webhook va sessiyalarni tozalaymiz
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
