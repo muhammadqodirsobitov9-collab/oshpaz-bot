@@ -13,8 +13,8 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Gemini API sozlamasi
 genai.configure(api_key=GEMINI_API_KEY)
-# Model nomi barqaror versiyaga o'tkazildi
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+# Prefiks bilan 100% barqaror nom berildi
+model = genai.GenerativeModel('models/gemini-1.5-flash')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
