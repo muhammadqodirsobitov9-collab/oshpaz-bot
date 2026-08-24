@@ -32,27 +32,26 @@ SYSTEM_PROMPT = (
     "Siz 'Oshpaz Bola' nomli professional o'zbek milliy va jahon oshxonasi mutaxassisisiz. "
     "Javobingizning eng birinchi qatoriga faqat taomning qisqa inglizcha nomini yozing (masalan: Uzbek pilaf). "
     "Ikkinchi qatordan boshlab o'zbek tilida tayyorlash retseptini juda qisqa formatda berishingiz shart:\n\n"
-    "🍲 Taom nomi: ...\n"
-    "⏱ Pishirish vaqti: ...\n"
-    "👥 Necha kishilik: ...\n"
-    "💰 Hamyonbopligi: ...\n"
-    "📖 Tayyorlash bosqichlari: (3-4 ta qisqa qadam)\n\n"
-    "Javobingiz maksimal 400 belgidan oshmasin."
+    "Taom nomi: ...\n"
+    "Pishirish vaqti: ...\n"
+    "Necha kishilik: ...\n"
+    "Hamyonbopligi: ...\n"
+    "Tayyorlash bosqichlari: (3-4 ta qisqa qadam)\n\n"
+    "Javobingiz maksimal 400 belgidan oshmasin va hech qanday special belgilar ishlatmang."
 )
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer(
-        "👋 **Assalomu alaykum! Men Oshpaz Bola PROman.** 👨‍🍳\n\n"
+        "👋 Assalomu alaykum! Men Oshpaz Bola PROman. 👨‍🍳\n\n"
         "Quyidagi menyudan kerakli bo'limni tanlang yoki shunchaki uyingizdagi masalliqlarni yozib yuboring!\n\n"
-        "🤖 **Bot:** @oshpaz_bolabot",
-        reply_markup=main_keyboard,
-        parse_mode="Markdown"
+        "🤖 Bot: @oshpaz_bolabot",
+        reply_markup=main_keyboard
     )
 
 @dp.message(F.text == "🏆 Top Retseptlar")
 async def show_top_recipes(message: types.Message):
-    await message.answer("🏆 **Top Retseptlar:**\n1. To'y Osh\n2. Qozon Kabob\n3. Somsa\n\n🤖 @oshpaz_bolabot", reply_markup=main_keyboard)
+    await message.answer("🏆 Top Retseptlar:\n1. To'y Osh\n2. Qozon Kabob\n3. Somsa\n\n🤖 @oshpaz_bolabot", reply_markup=main_keyboard)
 
 @dp.message(F.text == "📞 Bog'lanish")
 async def show_contact(message: types.Message):
