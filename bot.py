@@ -9,10 +9,11 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import google.generativeai as genai
 from aiohttp import web
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAF3Kyd79btdM18HR8JMaK0SFRbqXBtITVU")
+# YANGI TOKEN VA API KEY
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAGTptmmsveyM-1NFWdy78QOw0fjCjnOjnM")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
 
-# Gemini sozlamasi (Yangilangan barqaror model)
+# Gemini sozlamasi
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
