@@ -12,9 +12,9 @@ from aiohttp import web
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAF3Kyd79btdM18HR8JMaK0SFRbqXBtITVU")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
 
-# Gemini sozlashi
+# Gemini sozlamasi (Yangilangan barqaror model)
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
