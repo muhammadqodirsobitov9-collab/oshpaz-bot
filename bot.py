@@ -9,8 +9,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import google.generativeai as genai
 from aiohttp import web
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAHspRHUgyCJtE5xwKfur6vrTUJHv-Sr6QI")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
