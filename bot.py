@@ -9,14 +9,13 @@ from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton,
     InlineQueryResultArticle, InputTextMessageContent
 )
-import google.generativeai as genai
+from google import genai
 from aiohttp import web
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAGTptmmsveyM-1NFWdy78QOw0fjCjnOjnM")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8884292329:AAHspRHUgyCJtE5xwKfur6vrTUJHv-Sr6QI")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6K52e8B-P7d-hd_IreowcU0cl-e3n-vO41I0erbiCpW5g")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -131,7 +130,7 @@ async def inline_query_handler(query: types.InlineQuery):
 
 @dp.message(F.text)
 async def handle_user_text(message: types.Message):
-    await generate_recipe(message, f"Foydalanuvchi so'rovi: {message.text}")
+    await generate_recipe(message, f"So'rov: {message.text}")
 
 async def generate_recipe(message: types.Message, prompt_text: str):
     await bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
@@ -139,37 +138,29 @@ async def generate_recipe(message: types.Message, prompt_text: str):
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
             None, 
-            lambda: model.generate_content(
-                f"{SYSTEM_PROMPT}\n\n{prompt_text}",
-                generation_config=genai.types.GenerationConfig(max_output_tokens=300)
+            lambda: client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=f"{SYSTEM_PROMPT}\n\n{prompt_text}"
             )
         )
         full_text = response.text.strip()
-        
         lines = full_text.split("\n")
-        english_food_name = lines[0].strip()
-        recipe_body = "\n".join(lines[1:]).strip()
-        
-        recipe_body += "\n\n🤖 @oshpaz_bolabot"
+        english_name = lines[0].strip()
+        recipe_body = "\n".join(lines[1:]).strip() + "\n\n🤖 @oshpaz_bolabot"
 
-        encoded_query = urllib.parse.quote(english_food_name)
+        encoded_query = urllib.parse.quote(english_name)
         image_url = f"https://pollinations.ai/p/{encoded_query}?width=600&height=400&seed=42&nologo=true"
 
         try:
-            await message.answer_photo(
-                photo=image_url,
-                caption=recipe_body,
-                reply_markup=main_keyboard
-            )
+            await message.answer_photo(photo=image_url, caption=recipe_body, reply_markup=main_keyboard)
         except Exception:
             await message.answer(recipe_body, reply_markup=main_keyboard)
-
     except Exception as e:
-        logging.error(f"Gemini xatoligi: {e}")
+        logging.error(f"Xatolik: {e}")
         await message.answer("⚠️ Kechirasiz, birozdan so'ng qayta urinib ko'ring.\n\n🤖 @oshpaz_bolabot")
 
 async def handle(request):
-    return web.Response(text="Bot ishlamoqda!")
+    return web.Response(text="Bot Live!")
 
 async def main():
     logging.basicConfig(level=logging.INFO)
