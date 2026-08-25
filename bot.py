@@ -14,14 +14,8 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY.strip())
 
-# Har qanday 404 xatosini oldini oluvchi avto-model tanlash
-try:
-    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    selected_model = available_models[0] if available_models else 'models/gemini-1.5-flash'
-except Exception:
-    selected_model = 'models/gemini-1.5-flash'
-
-model = genai.GenerativeModel(selected_model)
+# Model nomi aniq qilib belgilandi
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -100,4 +94,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
