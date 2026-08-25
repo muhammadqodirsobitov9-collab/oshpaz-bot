@@ -1,21 +1,15 @@
 import os
 import asyncio
 import logging
+import urllib.parse
+import aiohttp
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
 from aiogram.enums import ChatAction
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-import google.generativeai as genai
 from aiohttp import web
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY.strip())
-
-# Model nomi aniq qilib belgilandi
-model = genai.GenerativeModel('gemini-2.0-flash')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -39,6 +33,18 @@ SYSTEM_PROMPT = (
     "Javobingiz maksimal 400 belgidan oshmasin va formatlash belgilaridan foydalanmang."
 )
 
+async def get_ai_recipe(prompt_text):
+    full_prompt = f"{SYSTEM_PROMPT}\n\nFoydalanuvchi so'rovi: {prompt_text}"
+    encoded_prompt = urllib.parse.quote(full_prompt)
+    url = f"https://text.pollinations.ai/{encoded_prompt}"
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                return await response.text()
+            else:
+                raise Exception(f"HTTP error {response.status}")
+
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer(
@@ -60,18 +66,13 @@ async def show_contact(message: types.Message):
 async def handle_user_text(message: types.Message):
     await bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
     try:
-        loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, 
-            lambda: model.generate_content(f"{SYSTEM_PROMPT}\n\nFoydalanuvchi so'rovi: {message.text}")
-        )
-        recipe_text = response.text.strip() + "\n\n🤖 @oshpaz_bolabot"
-        await message.answer(recipe_text, reply_markup=main_keyboard)
+        recipe_text = await get_ai_recipe(message.text)
+        final_text = recipe_text.strip() + "\n\n🤖 @oshpaz_bolabot"
+        await message.answer(final_text, reply_markup=main_keyboard)
     except Exception as e:
-        logging.error(f"Gemini Xatosi: {e}")
+        logging.error(f"AI Xatosi: {e}")
         await message.answer(
-            f"⚠️ API Xatolik: {str(e)[:80]}\n\n"
-            "📩 Adminga yuboring: @sobitovv_o8\n\n"
+            "⚠️ Kechirasiz, retsept tayyorlashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.\n\n"
             "🤖 @oshpaz_bolabot", 
             reply_markup=main_keyboard
         )
