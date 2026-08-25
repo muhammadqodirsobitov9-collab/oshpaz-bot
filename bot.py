@@ -11,9 +11,17 @@ from aiohttp import web
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-genai.configure(api_key=GEMINI_API_KEY)
-# Eng yangi va barqaror model versiyasi
-model = genai.GenerativeModel('gemini-2.0-flash')
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY.strip())
+
+# Har qanday 404 xatosini oldini oluvchi avto-model tanlash
+try:
+    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    selected_model = available_models[0] if available_models else 'models/gemini-1.5-flash'
+except Exception:
+    selected_model = 'models/gemini-1.5-flash'
+
+model = genai.GenerativeModel(selected_model)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -68,7 +76,7 @@ async def handle_user_text(message: types.Message):
     except Exception as e:
         logging.error(f"Gemini Xatosi: {e}")
         await message.answer(
-            f"⚠️ Kechirasiz, retseptni generatsiya qilishda xatolik yuz berdi.\n\n"
+            f"⚠️ API Xatolik: {str(e)[:80]}\n\n"
             "📩 Adminga yuboring: @sobitovv_o8\n\n"
             "🤖 @oshpaz_bolabot", 
             reply_markup=main_keyboard
@@ -92,3 +100,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
