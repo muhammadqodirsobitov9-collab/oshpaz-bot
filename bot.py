@@ -1,7 +1,6 @@
 import os
 import asyncio
 import logging
-import urllib.parse
 import aiohttp
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
@@ -34,12 +33,17 @@ SYSTEM_PROMPT = (
 )
 
 async def get_ai_recipe(prompt_text):
-    full_prompt = f"{SYSTEM_PROMPT}\n\nFoydalanuvchi so'rovi: {prompt_text}"
-    encoded_prompt = urllib.parse.quote(full_prompt)
-    url = f"https://text.pollinations.ai/{encoded_prompt}"
+    url = "https://text.pollinations.ai/"
+    payload = {
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt_text}
+        ],
+        "model": "openai"
+    }
     
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.post(url, json=payload, timeout=15) as response:
             if response.status == 200:
                 return await response.text()
             else:
@@ -72,7 +76,7 @@ async def handle_user_text(message: types.Message):
     except Exception as e:
         logging.error(f"AI Xatosi: {e}")
         await message.answer(
-            "⚠️ Kechirasiz, retsept tayyorlashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.\n\n"
+            f"⚠️ Kechirasiz, retsept tayyorlashda xatolik yuz berdi ({str(e)[:50]}). Qayta urinib ko'ring.\n\n"
             "🤖 @oshpaz_bolabot", 
             reply_markup=main_keyboard
         )
